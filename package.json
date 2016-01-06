@@ -1,0 +1,28 @@
+{
+  "name": "cp-proxy",
+  "version": "1.0.0",
+  "description": "Simple control panel reverse proxy",
+  "main": "app.js",
+  "dependencies": {
+    "connect": "^3.4.0",
+    "cookie-session": "^1.2.0",
+    "http-proxy": "^1.12.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apisnetworks/cp-proxy.git"
+  },
+  "author": "Apis Networks <dev@apisnetworks.com>",
+  "maintainers": [
+  	"Matt Saladna <matt@apisnetworks.com>"
+   ],
+  "license": "GPL-2.0",
+  "bugs": {
+    "url": "https://github.com/apisnetworks/cp-proxy/issues"
+  },
+  "homepage": "https://github.com/apisnetworks/cp-proxy#readme"
+}
