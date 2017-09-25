@@ -30,3 +30,11 @@ Each subsequent request sends the session cookie that includes the server name t
 
 ### Bypassing reverse proxy
 An application may include `no-proxy` header in its response. The Location will flow through in the response headers effectively allowing the session to break from the proxy. 
+
+### Multi-homed Hosts
+When working in situations in which a server is multi-homed, ensure each IP is bound to the panel. With apnscp this can be accomplished by specifying multiple VHost macros in config/httpd-custom.conf:
+```
+ServerName myserver.com
+Use VHost 64.22.68.12
+Use VHost 64.22.68.13
+```
