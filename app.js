@@ -37,6 +37,10 @@ app.use(function (req, res, next) {
             useProxy = false;
         } else if (useProxy && hdr === 'location') {
             location = value;
+            if (res.statusCode === 307) { 
+                return oSetHeader(name, value); 
+            }
+
             if (location.charAt(6) === '/' &&
                 (location.substr(0, 7) === 'http://' || location.substr(0,8) === 'https://'))
             {
