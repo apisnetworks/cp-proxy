@@ -14,7 +14,7 @@ All configuration must be changed in `config/custom/config.ini`. cpcmd provides 
 | Section | Name          | Description                                                  | Sample Value                     |
 | ------- | ------------- | ------------------------------------------------------------ | -------------------------------- |
 | auth    | secret        | Must be the same across *all* instances. Used to encrypt trusted browsers. | ABCDEFGH                         |
-| auth    | server_format | Optional format that appends a domain to the result of *server_query*. <SERVER> is substituted with result from JSON query. | <SERVER>.apisnetworks.com        |
+| auth    | server_format | Optional format that appends a domain to the result of *server_query*. &lt;SERVER&gt; is substituted with result from JSON query. | &lt;SERVER&gt;.apisnetworks.com        |
 | auth    | server_query  | API endpoint that returns a JSON object with the server name | https://apnscp.com/server-lookup |
 | misc    | cp_proxy      | Control panel proxy endpoint that cp-proxy resides on        | https://cp.apnscp.com            |
 | misc    | sys_status    | Optional [Cachet](https://cachethq.io) location for system status | https://demo.cachethq.io/        |
