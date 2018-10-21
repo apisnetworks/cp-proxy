@@ -38,3 +38,7 @@ ServerName myserver.com
 Use VHost 64.22.68.12
 Use VHost 64.22.68.13
 ```
+
+# Making apnscp multi-server
+
+apnscp assumes that it operates on a single server. When using a CP proxy with multiple servers, additional configuration is needed. These files and supporting documentation are available within `multi-server-support` of this repository.
