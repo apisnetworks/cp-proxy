@@ -54,7 +54,8 @@ Note that apnscp will always send `Accept: application/json` with its request. T
 
 # Directing login
 A login can be directed to a specific server by appending */<server>* after the username in the login field. All participating servers must have *[auth]* => [server_layout](https://gitlab.com/apisnetworks/apnscp/blob/1849db941edd20154a3379eb49ee40e2e86656b0/config/config.ini#L284-290) set. Only an alphanumeric host is accepted, for example:
-  ✅ msaladna/delta
-  ❌ msaladna/delta.apisnetworks.com
+  
+* ✅ msaladna/delta
+* ❌ msaladna/delta.apisnetworks.com
 
 The hostname from server_layout is appended onto the server to form a valid redirect.
