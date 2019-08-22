@@ -1,0 +1,20 @@
+[Unit]
+Description=Control panel reverse proxy
+After=local-fs.target network.target
+
+[Service]
+User=cp
+Type=simple
+WorkingDirectory=~
+EnvironmentFile=-/etc/sysconfig/cp-proxy 
+PIDFile=/run/cp-proxy.pid
+ExecStart=/bin/bash -ic "node $HOME/proxy/app.js"
+PrivateTmp=true
+ProtectSystem=full
+Restart=on-failure
+OOMScoreAdjust=500
+RemainAfterExit=no
+Nice=0
+
+[Install]
+WantedBy=multi-user.target

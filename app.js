@@ -1,13 +1,16 @@
 "use strict";
-
 // Before switching servers on a request, fetch from this location
-var DEFAULT_TARGET = 'http://cp.sol.apisnetworks.com';
+var DEFAULT_TARGET = process.env.CP_TARGET || 'http://localhost:2082';
 
 // Port that the proxy server will listen on
-var PORT = 8021;
+var PORT = process.env.LISTEN_PORT || 8021;
 
 // Optional header to include in requests to bypass Location: subtitution
 var HEADER_PASSTHRU = 'no-proxy';
+
+// Key used to encrypt cookie session
+var cookieSecret = process.env.SECRET ||
+    Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
 var http = require('http'),
     connect = require('connect'),
@@ -17,8 +20,9 @@ var http = require('http'),
 
 app.use(cookieSession( {
     name: 'cpTarget',
-    keys: ['genericKey']
+    keys: [cookieSecret]
 }));
+
 
 var proxy = httpProxy.createProxyServer({
     target: DEFAULT_TARGET
@@ -66,4 +70,4 @@ app.use(function (req, res) {
     });
 });
 
-http.createServer(app).listen(PORT);
+http.createServer(app).listen(PORT, process.env.LISTEN_ADDR);

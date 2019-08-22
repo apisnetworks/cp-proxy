@@ -1,8 +1,8 @@
 # Multi-server extension
-Control panel reverse proxy multi-server support
+Control panel reverse proxy multi-server support.
 
 ## Usage
-Expand apnscp support to encompass multiple servers from a single endpoint (e.g. https://cp.apisnetworks.com). 
+Expand apnscp support to encompass multiple servers from a single endpoint (e.g. https://cp.apisnetworks.com). Source under `sample-app/` is a simple Lumen app to interact that dispatches lookups.
 
 ## Configuration
 ## config.ini
@@ -54,7 +54,7 @@ Note that apnscp will always send `Accept: application/json` with its request. T
 
 # Directing login
 A login can be directed to a specific server by appending */<server>* after the username in the login field. All participating servers must have *[auth]* => [server_layout](https://gitlab.com/apisnetworks/apnscp/blob/1849db941edd20154a3379eb49ee40e2e86656b0/config/config.ini#L284-290) set. Only an alphanumeric host is accepted, for example:
-  
+
 * ✅ msaladna/delta
 * ❌ msaladna/delta.apisnetworks.com
 

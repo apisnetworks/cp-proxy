@@ -1,0 +1,13 @@
+# Use the following URI as the base path to serve
+# panel requests. This is used before server lookup
+# to determine which server to route future requests
+CP_TARGET=http://localhost:2082
+
+# Listen on the following port
+LISTEN_PORT=8021
+# Listen on the following address, leave blank for all
+LISTEN_ADDRESS=
+# Optional encryption key for session cookie
+# Will randomly generate on start if not set, 
+# which will cause issues if the CP server flaps
+SECRET=
