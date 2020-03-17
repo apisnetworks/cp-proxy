@@ -8,7 +8,8 @@ See `multi-server-support/` bundled with this repository for information on coor
 It's a good idea to use [nvm](https://github.com/nvm-sh/nvm) if on CentOS 7 as the Node version that ships with CentOS 7 is a fossil.
 
 ```bash
-useradd -rs /sbin/nologin cp
+useradd -rms /sbin/nologin cp
+cd /home/cp
 sudo -u cp git clone https://github.com/apisnetworks/cp-proxy.git /home/cp/proxy
 cp /home/cp/proxy/cp-proxy.sysconf /etc/sysconfig/cp-proxy
 # Now is a good time to edit /etc/sysconfig/cp-proxy!
