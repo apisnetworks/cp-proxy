@@ -13,7 +13,7 @@ cd /home/cp
 sudo -u cp git clone https://github.com/apisnetworks/cp-proxy.git /home/cp/proxy
 cp /home/cp/proxy/cp-proxy.sysconf /etc/sysconfig/cp-proxy
 # Now is a good time to edit /etc/sysconfig/cp-proxy!
-cp /home/cp/proxy/cp-proxy.service /etc/systemd/service
+cp /home/cp/proxy/cp-proxy.service /etc/systemd/system
 # Skip below for fossilized environments!
 sudo -u cp npm install
 systemctl enable cp-proxy
