@@ -1,11 +1,29 @@
-# cp-proxy: apnscp reverse proxy
+<p align="center">
+    <img title="ApisCP Panel Proxy" src="https://apiscp.com/images/logo-inv.svg" />
+</p>
 
-cp-proxy is a reverse proxy that allows coordination between multiple, similar applications (chiefly, *apnscp control panels* in this case) in which the application will push a request to another server via 307 redirect to another server if the account resides elsewhere. cp-proxy doubles as a simple method of upgrading normal, unencrypted HTTP sessions to HTTPS by placing a performant SSL terminator in front of the proxy.
+ApisCP panel proxy provides a centralized login portal for all participating ApisCP nodes. Panel proxy
+consists of three components: (1) reverse proxy **cp-proxy**, (2) aggregation client **cp-collect**, and 
+(3) API service **cp-api**.
 
-## Installation
-See `multi-server-support/` bundled with this repository for information on coordinating apnscp across multiple servers. The following setup creates a limited system user that listens on port 8021. Apache sits in front of the proxy to act as an SSL terminator on 443 running apnscp. It could just as easily be haproxy or NGiNX.
+This is the reverse proxy service that directs requests to the proper server.
 
-It's a good idea to use [nvm](https://github.com/nvm-sh/nvm) if on CentOS 7 as the Node version that ships with CentOS 7 is a fossil.
+## Background
+
+cp-proxy is a reverse proxy that allows coordination between multiple, similar applications in which the application will push a request to another server via 307 redirect to another server if the account resides elsewhere. cp-proxy doubles as a simple method of upgrading normal, unencrypted HTTP sessions to HTTPS by placing a performant SSL terminator in front of the proxy.
+
+## Quickstart
+
+The following quickstart assumes a DNS-only or dev-only server that will not host any sites. These free licenses may be requested via [my.apiscp.com](https.my.apiscp.com). A DNS-only machine may be provisioned on a 1 GB machine using the following install command.
+
+```bash
+curl https://raw.githubusercontent.com/apisnetworks/apiscp-bootstrapper/master/bootstrap.sh | bash -s - -s use_robust_dns='true' -s always_permit_panel_login='true' -s has_dns_only='true' -s has_low_memory='true' -s dns_default_provider='null' -s anyversion_node='true' -s system_hostname='cp.mydomain.com' -s apnscp_admin_email='blackhole@apiscp.com'
+```
+`anyversion_node` allows using a non-system Node version (v10) for cp-proxy. `apnscp_admin_email` and `system_hostname` are required to arm the server with a valid SSL certificate.
+
+::: tip Low low-memory
+ApisCP is intended to work on 2 GB machines, but low-memory mode allows it to work on 1 GB machines. Not all 1 GB machines are provisioned consistently causing discrepancy in available memory for the guest. Add `-s limit_memory_1gb=500` to reduce the minimum memory check to "500 MB".
+:::
 
 ```bash
 useradd -rms /sbin/nologin cp
@@ -14,53 +32,80 @@ sudo -u cp git clone https://github.com/apisnetworks/cp-proxy.git /home/cp/proxy
 cp /home/cp/proxy/cp-proxy.sysconf /etc/sysconfig/cp-proxy
 # Now is a good time to edit /etc/sysconfig/cp-proxy!
 cp /home/cp/proxy/cp-proxy.service /etc/systemd/system
-# Skip below for fossilized environments!
-sudo -u cp npm install
+sudo -u cp /bin/bash -ic 'nvm install 10 ; cd /home/cp/proxy/ ; nvm exec npm install'
 systemctl enable cp-proxy
 systemctl start cp-proxy
 ```
 
-**Workaround for Node belonging in a museum**
-```bash
-su -s /bin/bash cp
-cd ~/proxy
-nvm install --lts
-echo 'lts' > .nvmrc
-npm install
-# exit su session
-exit
-```
-
-### SSL termination
-Any SSL terminator can sit in front of cp-proxy. This example covers Apache, but the same can be done for NGiNX, Caddy, haproxy, et cetera.
-
-In `/etc/httpd/conf/httpd-custom.conf` add the following lines, substituting *1.2.3.4* for your server IP address and *cp.mydomain.com* for the panel hostname. Copying the IP addresses above from a previous VirtualHost in httpd-custom.conf is **normally sufficient**.
+Next connect Apache to it by modifying `/etc/httpd/conf/httpd-custom.conf` within the SSL `VirtualHost` container
 
 ```
-<VirtualHost 1.2.3.4:443>
-SSLEngine On
+<IfModule ssl_module>
+        Listen 443
+        <VirtualHost 66.42.83.159:443 66.42.83.159:443 127.0.0.1:443 [::1]:443 >
 ServerName cp.mydomain.com
-ProxyPass / http://localhost:8021/
-ProxyPassReverse / http://localhost:8021/
-</VirtualHost>
+                SSLEngine On
+                RewriteEngine On
+                RewriteOptions Inherit
+                # Pass HTTPS status
+                RequestHeader set X-Forwarded-Proto "https"
+                # Add this line, note trailing /
+                ProxyPass / http://localhost:8021/
+                # And this line, note trailing /
+                ProxyPassReverse / http://localhost:8021/
+        </VirtualHost>
+</IfModule>
+
 ```
 
-Verify configuration and restart,
-```bash
-httpd -t && systemctl restart httpd
+Run `htrebuild`, then visit https://cp.mydomain.com. You're done!
+
+---
+
+By default, cp-proxy will read from http://localhost:2082. On a DNS-server this hosts no domains, which requires configuration below to route.
+
+## Configuration
+
+All configuration must be changed in `config/custom/config.ini`. [cpcmd](https://docs.apiscp.com/admin/CLI/#cpcmd) provides a short-hand means of doing this, e.g.
+
 ```
-#### Adding SSL
-In the above example, the panel inherits the primary SSL certificate. This is managed by apnscp. To add a new hostname, augment [letsencrypt] => additional_certs. It's easy to do using the apnscp.config Scope:
+cpcmd scope:set cp.config <SECTION> <NAME> <VALUE>
+```
+
+| Section | Name                 | Description                                                  | Sample Value                                        |
+| ------- | -------------------- | ------------------------------------------------------------ | --------------------------------------------------- |
+| auth    | secret               | Must be the same across *all* instances. Used to encrypt trusted browsers. | ABCDEFGH                                            |
+| auth    | server_format        | Optional format that appends a domain to the result of *server_query*. is substituted with result from JSON query. | .mydomain.com                                       |
+| auth    | server_query         | API endpoint that returns a JSON object with the server name. | https://api.mydomain.com/lookup                     |
+| core    | http_trusted_forward | [cp-proxy](https://github.com/apisnetworks/cp-proxy) service IP address. | 1.2.3.4                                             |
+| misc    | cp_proxy             | Control panel proxy endpoint that cp-proxy resides on.       | [https://cp.mydomain.com](https://cp.mydomain.com/) |
+| misc	| sys_status	| Optional Cachet location for system status	| https://demo.cachethq.io/  |
+
+For the lazy scholars, these values can be easily imported from an existing machine:
+
 ```bash
-cpcmd scope:get apnscp.config letsencrypt additional_certs
+for i in auth,secret auth,server_format auth,server_query core,http_trusted_forward misc,cp_proxy, misc,sys_status ; do 
+	IFS=","
+	set -- $i
+	section=$1
+	value=$2
+	echo "cpcmd scope:set cp.config $section $value '$(cpcmd scope:get cp.config $section $value)'"
+done
+```
+
+#### Adding SSL
+
+In the above example, the panel inherits the primary SSL certificate. This is managed by ApisCP. To add a new hostname, augment *[letsencrypt]* => *additional_certs*. It's easy to do using the cp.config Scope:
+```bash
+cpcmd scope:get cp.config letsencrypt additional_certs
 # Make a note of the certs, if any. Each certificate
 # is separated by a comma, e.g. "mydomain.com,cp.mydomain.com" or "cp.mydomain.com"
-cpcmd scope:set apnscp.config letsencrypt additional_certs "mydomainalias.com,cp.mydomain.com"
+cpcmd scope:set cp.config letsencrypt additional_certs "mydomainalias.com,cp.mydomain.com"
 ```
-apnscp will automatically restart and attempt to acquire an SSL certificate for `cp.mydomain.com` in addition to the pre-existing SSL alias, `mydomainalias.com`.
+ApisCP will automatically restart and attempt to acquire an SSL certificate for `cp.mydomain.com` in addition to the pre-existing SSL alias, `mydomainalias.com`.
 
-### CP Proxy configuration
-All configuration is managed within /etc/sysconfig/cp-proxy. After making changes, activate the new configuration by restarting cp-proxy: `systemctl restart cp-proxy`.
+### cp-proxy configuration
+All configuration is managed within `/etc/sysconfig/cp-proxy`. After making changes, activate the new configuration by restarting cp-proxy: `systemctl restart cp-proxy`.
 
 * **CP_TARGET**: initial URL that is fetched, this should be a panel login portal
 * **LISTEN_PORT**: port on which cp-proxy listens
@@ -68,14 +113,17 @@ All configuration is managed within /etc/sysconfig/cp-proxy. After making change
 * **SECRET**: used to encrypt session cookie. Generated randomly on service startup, which may cause issues if cp-proxy is constantly restarted. Define this value.
 
 ### Passing X-Forwarded-For header
-All requests pass X-Forwarded-For, which is the client address. Each apnscp panel installation **must be configured** to trust the cp-proxy server's data.
-On all instances that accept traffic from cp-proxy, set [core] => http_trusted_forward,
+All requests pass X-Forwarded-For, which is the client address. Each ApisCPpanel installation **must be configured** to trust the cp-proxy server's data.
+
+On all instances that accept traffic from cp-proxy, set *[core]* => *http_trusted_forward*
 
 ```bash
-cpcmd scope:set apnscp.config core http_trusted_forward 1.2.3.4
+cpcmd scope:set cp.config core http_trusted_forward 1.2.3.4
 ```
 
-## Server layout
+## Design
+
+### Server layout
 
 A caching HTTP accelerator like Varnish is recommended in front of the proxy to minimize requests that flow through to the proxy service. In my implementation, Apache sits in front for HTTP2 and TLS. Apache hits Varnish for static assets, then what is left flows to cp-proxy. cp-proxy serves from cp #1 by default.
 
@@ -94,7 +142,7 @@ A caching HTTP accelerator like Varnish is recommended in front of the proxy to 
 ```
 
 
-## Login mechanism & server designation
+### Login mechanism & server designation
 A login should check if the account is resident on the server. If not resident, the request should be forwarded to the proper server as a 307 redirect issued. This `Location:` header is filtered from the response and its FQDN stored as a session cookie.
 
 Each subsequent request sends the session cookie that includes the server name to the proxy.
@@ -109,7 +157,3 @@ ServerName myserver.com
 Use VHost 64.22.68.12
 Use VHost 64.22.68.13
 ```
-
-# Making apnscp multi-server
-
-apnscp assumes that it operates on a single server. When using a CP proxy with multiple servers, additional configuration is needed. These files and supporting documentation are available within `multi-server-support` of this repository.

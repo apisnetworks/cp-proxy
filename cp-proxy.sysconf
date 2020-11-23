@@ -6,8 +6,8 @@ CP_TARGET=http://localhost:2082
 # Listen on the following port
 LISTEN_PORT=8021
 # Listen on the following address, leave blank for all
-LISTEN_ADDRESS=
+LISTEN_ADDRESS=127.0.0.1
 # Optional encryption key for session cookie
-# Will randomly generate on start if not set, 
+# Will randomly generate on start if not set,
 # which will cause issues if the CP server flaps
 SECRET=

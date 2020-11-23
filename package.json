@@ -1,12 +1,12 @@
 {
   "name": "cp-proxy",
   "version": "1.0.0",
-  "description": "Simple control panel reverse proxy",
+  "description": "ApisCP reverse proxy",
   "main": "app.js",
   "dependencies": {
     "connect": "^3.4.0",
     "cookie-session": "^1.2.0",
-    "http-proxy": "^1.12.0"
+    "http-proxy": "^1.18.1"
   },
   "devDependencies": {},
   "scripts": {
@@ -18,9 +18,9 @@
   },
   "author": "Apis Networks <dev@apisnetworks.com>",
   "maintainers": [
-  	"Matt Saladna <matt@apisnetworks.com>"
-   ],
-  "license": "GPL-2.0",
+    "Matt Saladna <matt@apisnetworks.com>"
+  ],
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/apisnetworks/cp-proxy/issues"
   },
