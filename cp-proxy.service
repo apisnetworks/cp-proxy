@@ -1,12 +1,15 @@
 [Unit]
 Description=Control panel reverse proxy
 After=local-fs.target network.target
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=cp-proxy
 
 [Service]
 User=cp
 Type=simple
 WorkingDirectory=~
-EnvironmentFile=-/etc/sysconfig/cp-proxy 
+EnvironmentFile=-/etc/sysconfig/cp-proxy
 PIDFile=/run/cp-proxy.pid
 ExecStart=/bin/bash -ic "node $HOME/proxy/app.js"
 PrivateTmp=true

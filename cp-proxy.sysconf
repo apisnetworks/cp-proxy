@@ -1,7 +1,7 @@
 # Use the following URI as the base path to serve
 # panel requests. This is used before server lookup
 # to determine which server to route future requests
-CP_TARGET=http://localhost:2082
+CP_TARGET=http://127.0.0.1:2082
 
 # Listen on the following port
 LISTEN_PORT=8021

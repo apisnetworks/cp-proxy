@@ -2,12 +2,12 @@
 // Before switching servers on a request, fetch from this location
 var DEFAULT_TARGET = process.env.CP_TARGET || 'http://127.0.0.1:2082';
 
-var STRICT_SSL = process.env.hasOwnProperty("STRICT_SSL") ? Boolean(process.env.STRICT_SSL) : true;
-
+var STRICT_SSL = process.env.hasOwnProperty("STRICT_SSL") ? Boolean(JSON.parse(process.env.STRICT_SSL.toLowerCase())) : true;
+var DEBUG = process.env.hasOwnProperty("DEBUG") ? Boolean(JSON.parse(process.env.DEBUG.toLowerCase())) : false;
 // Port that the proxy server will listen on
-var PORT = process.env.LISTEN_PORT || 8021;
+var PORT = JSON.parse(process.env.LISTEN_PORT || 8021);
 
-// Optional header to include in requests to bypass Location: subtitution
+// Optional header to include in requests to bypass Location: substitution
 var HEADER_PASSTHRU = 'no-proxy';
 
 // Key used to encrypt cookie session
@@ -25,18 +25,20 @@ app.use(cookieSession( {
     keys: [cookieSecret]
 }));
 
-
 var proxy = httpProxy.createProxyServer({
     target: {
         protocol: 'https:',
         host: 'localhost',
         port: 2083,
+        xfwd: true
     },
     secure: STRICT_SSL
 }).on('error', function (err, req, res) {
+    console.log(err);
+    if (DEBUG) {
+        console.trace();
+    }
     res.end();
-}).on('proxyReq', function (proxyReq, req, res, options) {
-    proxyReq.setHeader('X-Forwarded-Proto', req.headers['x-forwarded-proto'] || 'https');
 });
 
 app.use(function (req, res, next) {
@@ -58,7 +60,7 @@ app.use(function (req, res, next) {
             if (location.charAt(6) === '/' &&
                 (location.substr(0, 7) === 'http://' || location.substr(0,8) === 'https://'))
             {
-                if (location.substr(0, 17) !== 'http://localhost:') {
+                if (location.substr(0, 17) !== 'http://127.0.0.1:') {
                     // server isn't local proxy
                     req.session.target = location.substr(0, location.indexOf('/', 8));
                 }
@@ -69,13 +71,14 @@ app.use(function (req, res, next) {
 
         return oSetHeader(name, value);
     };
+
     next();
 });
 
 app.use(function (req, res) {
     proxy.web(req, res, {
-        target: req.session.target != 'https://localhost:' + PORT &&
-            req.session.target !== 'http://localhost:' + PORT &&
+        target: req.session.target != 'https://127.0.0.1:' + PORT &&
+            req.session.target != 'http://127.0.0.1:' + PORT &&
             req.session.target || DEFAULT_TARGET
     });
 });

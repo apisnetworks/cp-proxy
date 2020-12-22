@@ -33,36 +33,52 @@ cp /home/cp/proxy/cp-proxy.sysconf /etc/sysconfig/cp-proxy
 # Now is a good time to edit /etc/sysconfig/cp-proxy!
 cp /home/cp/proxy/cp-proxy.service /etc/systemd/system
 sudo -u cp /bin/bash -ic 'nvm install 10 ; cd /home/cp/proxy/ ; nvm exec npm install'
-systemctl enable cp-proxy
-systemctl start cp-proxy
+systemctl enable --now cp-proxy
 ```
 
-Next connect Apache to it by modifying `/etc/httpd/conf/httpd-custom.conf` within the SSL `VirtualHost` container
+Next connect Apache to it by modifying /etc/httpd/conf/httpd-custom.conf within the SSL VirtualHost container. 
+Pagespeed is disabled, which is known to cause interference with assets.
 
 ```
 <IfModule ssl_module>
-        Listen 443
-        <VirtualHost 66.42.83.159:443 66.42.83.159:443 127.0.0.1:443 [::1]:443 >
-ServerName cp.mydomain.com
+        Listen 443        
+        <VirtualHost 66.42.83.159:443 127.0.0.1:443 [::1]:443 >                                
+                ServerName cp.mydomain.com
                 SSLEngine On
                 RewriteEngine On
                 RewriteOptions Inherit
+                # --- Add below ---
+                # Disable gzip compression
+                <IfModule pagespeed_module>
+                    ModPagespeed unplugged
+                </IfModule>
+
                 # Pass HTTPS status
                 RequestHeader set X-Forwarded-Proto "https"
                 # Add this line, note trailing /
                 ProxyPass / http://localhost:8021/
                 # And this line, note trailing /
                 ProxyPassReverse / http://localhost:8021/
+                # -^- Add above -^-
         </VirtualHost>
 </IfModule>
 
 ```
 
-Run `htrebuild`, then visit https://cp.mydomain.com. You're done!
+Next, reconfigure ApisCP to listen on a private network for the cp-proxy service.
+
+```bash
+cpcmd scope:set cp.bootstrapper has_proxy_only true
+cpcmd scope:set cp.bootstrapper cp_proxy_ip 127.0.0.1
+# Regenerate httpd-custom.conf in ApisCP
+env BSARGS="--extra-vars=force=yes" upcp -sb apnscp/bootstrap
+```
+
+Run `htrebuild`, then visit [https://cp.mydomain.com](https://cp.mydomain.com/). You're done!
 
 ---
 
-By default, cp-proxy will read from http://localhost:2082. On a DNS-server this hosts no domains, which requires configuration below to route.
+By default, cp-proxy will read from [http://127.0.0.1:2082](http://127.0.0.1:2082/). On a DNS-server this hosts no domains, which requires configuration below to route.
 
 ## Configuration
 
@@ -92,8 +108,32 @@ for i in auth,secret auth,server_format auth,server_query core,http_trusted_forw
 	echo "cpcmd scope:set cp.config $section $value '$(cpcmd scope:get cp.config $section $value)'"
 done
 ```
+### Passing X-Forwarded-For header
 
-#### Adding SSL
+All requests pass `X-Forwarded-For`, which is the client address. Each ApisCP panel installation **must be configured** to trust the cp-proxy server's data. Failure to do so will result in incorrect brute-force protection applied via [Anvil](../SECURITY.md#remote-access) or worse, IP spoofing by a malicious actor.
+
+On all instances that accept traffic from cp-proxy **besides cp-proxy**, set *[core]* => *http_trusted_forward* assuming cp-proxy has the IP address 1.2.3.4:
+
+```bash
+cpcmd scope:set cp.bootstrapper cp_proxy_ip 1.2.3.4
+env BSARGS="--extra-vars=force=yes" upcp -sb apnscp/bootstrap
+```
+
+**On the cp-proxy instance**, set http_trusted_forward to 127.0.0.1:
+
+```bash
+cpcmd scope:set cp.bootstrapper has_proxy_only true
+cpcmd scope:set cp.bootstrapper cp_proxy_ip 127.0.0.1
+env BSARGS="--extra-vars=force=yes" upcp -sb apnscp/bootstrap
+```
+
+:::warning cp-proxy as a solitary service
+Setting `http_trusted_forward` to 127.0.0.1 prevents spoofing from malicious actors when sending a bogus `X-Forwarded-For:` header. Setting `http_trusted_forward` to 1.2.3.4 without restricting public network access via `PrivateNetwork=yes` would allow an attacker to spoof their IP remotely from 1.2.3.4, or in other words allow a customer on your network to brute-force other machines. 
+
+Keeping cp-proxy as a solitary service prevents such internal subterfuge.
+:::
+
+### Adding SSL
 
 In the above example, the panel inherits the primary SSL certificate. This is managed by ApisCP. To add a new hostname, augment *[letsencrypt]* => *additional_certs*. It's easy to do using the cp.config Scope:
 ```bash
@@ -105,21 +145,14 @@ cpcmd scope:set cp.config letsencrypt additional_certs "mydomainalias.com,cp.myd
 ApisCP will automatically restart and attempt to acquire an SSL certificate for `cp.mydomain.com` in addition to the pre-existing SSL alias, `mydomainalias.com`.
 
 ### cp-proxy configuration
+
 All configuration is managed within `/etc/sysconfig/cp-proxy`. After making changes, activate the new configuration by restarting cp-proxy: `systemctl restart cp-proxy`.
 
-* **CP_TARGET**: initial URL that is fetched, this should be a panel login portal
-* **LISTEN_PORT**: port on which cp-proxy listens
-* **LISTEN_ADDRESS**: IPv4/6 address on which cp-proxy listens
-* **SECRET**: used to encrypt session cookie. Generated randomly on service startup, which may cause issues if cp-proxy is constantly restarted. Define this value.
-
-### Passing X-Forwarded-For header
-All requests pass X-Forwarded-For, which is the client address. Each ApisCPpanel installation **must be configured** to trust the cp-proxy server's data.
-
-On all instances that accept traffic from cp-proxy, set *[core]* => *http_trusted_forward*
-
-```bash
-cpcmd scope:set cp.config core http_trusted_forward 1.2.3.4
-```
+- **CP_TARGET**: initial URL that is fetched, this should be a panel login portal
+- **LISTEN_PORT**: port on which cp-proxy listens
+- **LISTEN_ADDRESS**: IPv4/6 address on which cp-proxy listens
+- **SECRET**: used to encrypt session cookie. Generated randomly on service startup, which may cause issues if cp-proxy is constantly restarted. Define this value.
+- **STRICT_SSL**: enable peer verification of hostnames when connecting via SSL
 
 ### Multi-homed Hosts
 When working in situations in which a server is multi-homed, ensure each IP is bound to the panel. With ApisCP this can be accomplished by specifying multiple VHost macros in `/usr/local/apnscp/config/httpd-custom.conf`:
