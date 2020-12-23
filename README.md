@@ -108,7 +108,7 @@ for i in auth,secret auth,server_format auth,server_query core,http_trusted_forw
 	echo "cpcmd scope:set cp.config $section $value '$(cpcmd scope:get cp.config $section $value)'"
 done
 ```
-### Passing X-Forwarded-For header
+### Passing IP address
 
 All requests pass `X-Forwarded-For`, which is the client address. Each ApisCP panel installation **must be configured** to trust the cp-proxy server's data. Failure to do so will result in incorrect brute-force protection applied via [Anvil](../SECURITY.md#remote-access) or worse, IP spoofing by a malicious actor.
 
@@ -142,6 +142,16 @@ Setting `http_trusted_forward` to 127.0.0.1 prevents spoofing from malicious act
 
 Keeping cp-proxy as a solitary service prevents such internal subterfuge.
 :::
+
+### Billing compatibility
+
+[WHMCS module](https://github.com/lhdev/apiscp-whmcs) passes the active client IP address as `X-Forwarded-For` for firewall checks. When using cp-proxy in conjunction with supported billing modules, it is necessary to add the billing server to the list of trusted forwards. Specifying a list of IP addresses, ApisCP will filter internal and external addresses.
+
+```bash
+# Assuming WHMCS is installed on 64.22.68.2
+cpcmd scope:set cp.bootstrapper cp_proxy_ip '[127.0.0.1,64.22.68.2]'
+env BSARGS="--extra-vars=force=yes" upcp -sb apnscp/bootstrap
+```
 
 ### Adding SSL
 
