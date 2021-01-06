@@ -1,9 +1,6 @@
 [Unit]
 Description=Control panel reverse proxy
 After=local-fs.target network.target
-StandardOutput=syslog
-StandardError=syslog
-SyslogIdentifier=cp-proxy
 
 [Service]
 User=cp
@@ -18,6 +15,9 @@ Restart=on-failure
 OOMScoreAdjust=500
 RemainAfterExit=no
 Nice=0
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=cp-proxy
 
 [Install]
 WantedBy=multi-user.target
