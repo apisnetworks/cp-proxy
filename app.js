@@ -26,6 +26,7 @@ app.use(cookieSession( {
 }));
 
 var proxy = httpProxy.createProxyServer({
+    changeOrigin: true,
     target: {
         protocol: 'https:',
         host: 'localhost',
