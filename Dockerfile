@@ -4,8 +4,6 @@ MAINTAINER "thundersquared" <containers@thundersquared.com>
 ENV CP_TARGET "http://127.0.0.1:2082"
 ENV LISTEN_PORT 8021
 ENV LISTEN_ADDRESS "127.0.0.1"
-ENV SECRET ""
-ENV STRICT_SSL ""
 
 COPY app.js /app/app.js
 COPY package.json /app/package.json
