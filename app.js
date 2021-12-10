@@ -33,7 +33,8 @@ var proxy = httpProxy.createProxyServer({
         port: 2083,
         xfwd: true
     },
-    secure: STRICT_SSL
+    secure: STRICT_SSL,
+    localAddress: process.env.CLIENT_ADDRESS || '0.0.0.0'
 }).on('error', function (err, req, res) {
     console.log(err);
     if (DEBUG) {

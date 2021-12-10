@@ -11,6 +11,7 @@ LISTEN_ADDRESS=127.0.0.1
 # Will randomly generate on start if not set,
 # which will cause issues if the CP server flaps
 SECRET=
-
+# Use the following address when making proxy requests.
+CLIENT_ADDRESS=
 # Perform peer validation on all SSL certificates. Default true.
 # STRICT_SSL=
