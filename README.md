@@ -17,7 +17,7 @@ cp-proxy is a reverse proxy that allows coordination between multiple, similar a
 The following quickstart assumes a DNS-only or dev-only server that will not host any sites. These free licenses may be requested via [my.apiscp.com](https.my.apiscp.com). A DNS-only machine may be provisioned on a 1 GB machine using the following install command.
 
 ```bash
-curl https://raw.githubusercontent.com/apisnetworks/apiscp-bootstrapper/master/bootstrap.sh | bash -s - -s use_robust_dns='true' -s always_permit_panel_login='true' -s has_dns_only='true' -s has_low_memory='true' -s dns_default_provider='null' -s anyversion_node='true' -s system_hostname='cp.mydomain.com' -s apnscp_admin_email='blackhole@apiscp.com'
+curl https://raw.githubusercontent.com/apisnetworks/apiscp-bootstrapper/master/bootstrap.sh | bash -s - -s use_robust_dns='true' -s always_permit_panel_login='true' -s has_dns_only='true' -s has_low_memory='true' -s dns_default_provider='null' -s anyversion_node='true' -s system_hostname='cp.mydomain.com' -s apnscp_admin_email='blackhole@apiscp.com' -s php_enabled=1
 ```
 `anyversion_node` allows using a non-system Node version (v10) for cp-proxy. `apnscp_admin_email` and `system_hostname` are required to arm the server with a valid SSL certificate.
 
