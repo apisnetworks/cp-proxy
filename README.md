@@ -91,7 +91,7 @@ cpcmd scope:set cp.config <SECTION> <NAME> <VALUE>
 | Section | Name                 | Description                                                  | Sample Value                                        |
 | ------- | -------------------- | ------------------------------------------------------------ | --------------------------------------------------- |
 | auth    | secret               | Must be the same across *all* instances. Used to encrypt trusted browsers. | ABCDEFGH                                            |
-| auth    | server_format        | Optional format that appends a domain to the result of *server_query*. is substituted with result from JSON query. | .mydomain.com                                       |
+| auth    | server_format        | Optional format that appends a domain to the result of *server_query*. \<SERVER> is substituted with result from JSON query. | \<SERVER>.mydomain.com                                       |
 | auth    | server_query         | API endpoint that returns a JSON object with the server name. | https://api.mydomain.com/lookup                     |
 | core    | http_trusted_forward | [cp-proxy](https://github.com/apisnetworks/cp-proxy) service IP address. | 1.2.3.4                                             |
 | misc    | cp_proxy             | Control panel proxy endpoint that cp-proxy resides on.       | [https://cp.mydomain.com](https://cp.mydomain.com/) |
